@@ -291,12 +291,13 @@ class TileElement(ChildMixin, AbsoluteSourceMixin, Element):
 
     def handle_animation(self, node):
         frames = []
+        map_obj = self.root
         tileset = self.parent
         for frame_node in node.findall('frame'):
             tileid = to_python('tileid', frame_node.get('tileid'))
             gid = tileset.firstgid + tileid
             # add tile required to display animation
-            if gid not in self.root.tiles:
+            if gid not in map_obj.tiles:
                 tileset.add_tile(None, gid=gid, width=tileset.tilewidth, height=tileset.tileheight)
             duration = to_python('duration', frame_node.get('duration'))
             frames.append(AnimationFrame(gid, duration))
