@@ -300,7 +300,7 @@ class TileElement(ChildMixin, AbsoluteSourceMixin, Element):
             if gid not in map_obj.tiles:
                 tileset.add_tile(None, gid=gid, width=tileset.tilewidth, height=tileset.tileheight)
             duration = to_python('duration', frame_node.get('duration'))
-            frames.append(AnimationFrame(gid, duration))
+            frames.append(AnimationFrame(gid, duration, map_obj))
         self.set_property('animation_frames', tuple(frames))
 
     def set_uvs(self, uvs):

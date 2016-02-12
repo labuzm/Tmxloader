@@ -1,12 +1,40 @@
 import struct
+import weakref
 from collections import defaultdict, namedtuple
 
 FLIPPED_VERTICALLY_FLAG = 0x40000000
 FLIPPED_DIAGONALLY_FLAG = 0x20000000
 FLIPPED_HORIZONTALLY_FLAG = 0x80000000
 
-AnimationFrame = namedtuple('frame', ('gid', 'duration'))
 TextureFlags = namedtuple('flags', ('flipped_horizontally', 'flipped_vertically', 'flipped_diagonally'))
+
+
+class AnimationFrame(object):
+    __slots__ = ('gid', 'duration', '_root')
+
+    def __init__(self, gid, duration, root):
+        self.gid = gid
+        self.duration = duration
+        self._root = weakref.ref(root)
+
+    def __unicode__(self):
+        return u'{}@{}'.format(self.__class__.__name__, self.gid)
+
+    def __repr__(self):
+        return self.__unicode__()
+
+    @property
+    def root(self):
+        return self._root()
+
+    @property
+    def image(self):
+        tile = self.root.tiles[self.gid]
+        return tile.image
+
+    @property
+    def duration_seconds(self):
+        return self.duration / 1000.0
 
 
 def is_not_dunder(name):
