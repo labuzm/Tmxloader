@@ -8,5 +8,7 @@ setup(
     version=__VERSION__,
     description='Simple library for loading .tmx files',
     author='Marcin Labuz',
-    author_email='labuzm@gmail.com'
+    author_email='labuzm@gmail.com',
+    packages=['tmxloader']
+
 )
