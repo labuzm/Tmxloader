@@ -250,8 +250,6 @@ class TileElement(ChildMixin, AbsoluteSourceMixin, Element):
 
         self.id = None
         self.gid = None
-        self.terrain = None
-        self.probability = None
 
         if node is not None:
             self.init_from_node(node)
