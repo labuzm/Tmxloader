@@ -6,7 +6,7 @@ from xml.etree import ElementTree
 from itertools import islice, product, ifilter, imap, chain
 
 from utils import to_python, unpack_struct, decode_gid,\
-    AnimationFrame, ObjectType, LayerType
+    AnimationFrame, ObjectType, LayerType, FilterIterator
 
 
 class Element(object):
@@ -538,22 +538,28 @@ class TileMap(Element):
 
     @property
     def visible_layers(self):
-        return self._get_layers(layer_type=None, visible=True)
+        return self._get_layers(layer_type=None).filter(visible=True)
 
-    def get_tile_layers(self, visible=None):
-        return self._get_layers(self.tilelayer_cls, visible)
+    @property
+    def tile_layers(self):
+        return self._get_layers(self.tilelayer_cls)
 
-    def get_image_layers(self, visible=None):
-        return self._get_layers(self.imagelayer_cls, visible)
+    @property
+    def image_layers(self):
+        return self._get_layers(self.imagelayer_cls)
 
-    def get_object_groups(self, visible=None):
-        return self._get_layers(self.objectgroup_cls, visible)
+    @property
+    def object_groups(self):
+        return self._get_layers(self.objectgroup_cls)
 
-    def _get_layers(self, layer_type, visible):
-        for layer in self.layers:
-            if layer_type is None or isinstance(layer, layer_type):
-                if visible is None or layer.visible == visible:
-                    yield layer
+    @property
+    def objects(self):
+        objects = (g.objects for g in self.object_groups)
+        return FilterIterator(chain.from_iterable(objects))
+
+    def _get_layers(self, layer_type):
+        layers = (l for l in self.layers if layer_type is None or isinstance(l, layer_type))
+        return FilterIterator(layers)
 
     def get_tile(self, gid):
         return self.tiles[gid]
@@ -615,7 +621,7 @@ class TileMap(Element):
                 tile.set_uvs((x, y))
                 tile.image = loader(tile=tile)
 
-        for image_layer in self.get_image_layers():
+        for image_layer in self.image_layers:
             loader = load_image(image_layer=image_layer)
             image_layer.image = loader()
 

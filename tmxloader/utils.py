@@ -1,5 +1,6 @@
 import struct
 import weakref
+from operator import attrgetter
 from collections import defaultdict, namedtuple
 
 FLIPPED_VERTICALLY_FLAG = 0x40000000
@@ -135,3 +136,56 @@ def decode_gid(gid):
     flags = TextureFlags(flipped_horizontally, flipped_vertically, flipped_diagonally)
     gid &= ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG)
     return gid, flags
+
+
+class MultipleElementsException(Exception):
+    pass
+
+
+class ElementNotFound(Exception):
+    pass
+
+
+class FilterIterator(object):
+    def __init__(self, iterable):
+        self.iterable = iterable
+
+    def __iter__(self):
+        return self.iterable
+
+    def get(self, **kwargs):
+        filtered_list = list(self._filter(**kwargs))
+        l = len(filtered_list)
+        if l == 0:
+            raise ElementNotFound(u'No element was found using {}'.format(kwargs))
+        elif l > 1:
+            raise MultipleElementsException(u'Multiple elements were found using {}'.format(kwargs))
+        return filtered_list[0]
+
+    def filter(self, **kwargs):
+        return FilterIterator(self._filter(**kwargs))
+
+    def _filter(self, **kwargs):
+        # attrgetter uses dots to perform nested lookups but dots are not allowed in parameters name,
+        # so we use dunder instead.
+        attr_names = (l.replace('__', '.') for l in kwargs.iterkeys())
+        attr_values = kwargs.values()
+        getter = attrgetter(*attr_names)
+
+        for obj in self:
+            try:
+                values = getter(obj)
+            except AttributeError:
+                continue
+            else:
+                # attrgetter has a bit inconsistent behavior
+                # it return a single value if there was only one kwarg
+                # and tuple of values if there were multiple kwargs
+                if not isinstance(values, tuple):
+                    values = (values, )
+
+            if tuple(attr_values) == values:
+                yield obj
+
+    def list(self):
+        return list(self.iterable)
