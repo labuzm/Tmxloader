@@ -49,13 +49,12 @@ class Element(object):
         # omit all attributes that aren't explicitly set on instance
         if not hasattr(self, attr_name):
             return
-        # cast to appropriate type
-        value = to_python(attr_name, value)
         try:
-            # some additional processing if required
+            # do some custom processing if required
             prepare = getattr(self, 'prepare_attr_{}'.format(attr_name))
         except AttributeError:
-            pass
+            # or just cast to the predefined type if custom method wasn't provided
+            value = to_python(attr_name, value)
         else:
             value = prepare(value)
         setattr(self, attr_name, value)
@@ -148,6 +147,7 @@ class ObjectElement(ChildMixin, Element):
                 break
 
     def prepare_attr_gid(self, gid):
+        gid = int(gid)
         map_obj = self.root
         gid, self.flags = decode_gid(gid)
         # object uses tile as a image
@@ -159,6 +159,7 @@ class ObjectElement(ChildMixin, Element):
         return gid
 
     def prepare_attr_y(self, y):
+        y = float(y)
         map_obj = self.root
         if map_obj.invert_y:
             y = map_obj.size[1] - y
@@ -172,6 +173,14 @@ class ObjectElement(ChildMixin, Element):
             local_x, local_y = cords.split(',')
             points.append((x + float(local_x), y + float(local_y)))
         return tuple(points)
+
+    @staticmethod
+    def prepare_attr_width(width):
+        return float(width)
+
+    @staticmethod
+    def prepare_attr_height(height):
+        return float(height)
 
 
 class ObjectGroup(ChildMixin, Element):
@@ -222,6 +231,7 @@ class ImageLayer(ChildMixin, AbsoluteSourceMixin, Element):
         self.init_from_node(node)
 
     def prepare_attr_offsety(self, offsety):
+        offsety = float(offsety)
         map_obj = self.root
         if map_obj.invert_y:
             offsety = map_obj.size[1] - offsety
@@ -278,12 +288,12 @@ class TileElement(ChildMixin, AbsoluteSourceMixin, Element):
         image_node = node.find('image')
         if image_node is not None:
             self.set_attrs_from_node(image_node)
-
         else:
             self.width = self.parent.tilewidth
             self.height = self.parent.tileheight
 
     def prepare_attr_id(self, local_id):
+        local_id = int(local_id)
         self.gid = self.parent.firstgid + local_id
         return local_id
 
@@ -369,14 +379,6 @@ class TileLayer(ChildMixin, Element):
 
     def __iter__(self):
         return ifilter(None, self.data)
-
-    @staticmethod
-    def prepare_attr_width(value):
-        return int(value)
-
-    @staticmethod
-    def prepare_attr_height(value):
-        return int(value)
 
     def init_from_node(self, node):
         super(TileLayer, self).init_from_node(node)

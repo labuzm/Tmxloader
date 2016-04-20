@@ -114,7 +114,9 @@ PROPERTIES_TYPES.update({
     'x': float,
     'y': float,
     'tileid': int,
-    'duration': int
+    'duration': int,
+    'offsetx': float,
+    'offsety': float
 })
 
 
